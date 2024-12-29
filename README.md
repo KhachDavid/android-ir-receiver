@@ -14,6 +14,12 @@ mount -o remount,rw <CUSTOM DIRECTORY>
 
 mount -o remount,rw /boot
 
+## Attaching IR Receiver on the PI
+
+I used F-F cables to attach an IR receiver on the GPIO pin 18
+
+![image](https://github.com/user-attachments/assets/b2a178cd-63d3-43fb-a193-6fb8fe63a4d6)
+
 ## Reading ir receivers
 
 The below command resets the keys
