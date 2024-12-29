@@ -161,6 +161,43 @@ done
 input keyevent 3
 ```
 
+## Launch the movies app
+
+`cat /data/local/tmp/launch_movies_listener.sh`
+
+```bash
+#!/bin/bash
+
+# Set variables
+INPUT_DEVICE="/dev/input/event0"      # Replace this with the correct input device (e.g., event0)
+SCANCODE="0007076c"                  # Scancode to listen for
+DEBOUNCE_TIME=1                      # Debounce interval in seconds
+LAST_EXECUTION=0                     # Variable to track the last execution time
+
+# Monitor the input device for events
+getevent -ql $INPUT_DEVICE | while read line; do
+    # Check if the line contains the desired scancode
+    echo "$line" | grep "$SCANCODE" > /dev/null
+    if [ $? -eq 0 ]; then
+        # Get the current timestamp
+        CURRENT_TIME=$(date +%s)
+
+        # Check if the debounce period has elapsed
+        if (( CURRENT_TIME - LAST_EXECUTION >= DEBOUNCE_TIME )); then
+            # Update last execution time
+            LAST_EXECUTION=$CURRENT_TIME
+
+            # Run the command to launch the app
+            echo "Scancode $SCANCODE detected. Launching Movies Portal TV..."
+            am start -n evdoo.mdotv/.core.activities.MainActivity
+        else
+            echo "Debounced input ignored."
+        fi
+    fi
+done
+
+```
+
 ## Start scripts on startup
 
 `cat /system/etc/init/init.lineage.atv.adb.rc`
@@ -199,6 +236,11 @@ service power_listener /system/bin/sh /data/local/tmp/power_listener.sh
     oneshot
 
 service ok_listener /system/bin/sh /data/local/tmp/ok_button_listener.sh
+    class main
+    user root
+    oneshot
+
+service movies_listener /system/bin/sh /data/local/tmp/launch_movies_listener.sh
     class main
     user root
     oneshot
