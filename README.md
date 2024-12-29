@@ -111,6 +111,47 @@ getevent -ql $INPUT_DEVICE | while read line; do
 done
 ```
 
+## OK Button Listener
+
+`cat /data/local/tmp/ok_button_listener.sh`
+
+```
+#!/bin/bash
+
+# Input device and scancode configuration
+INPUT_DEVICE="/dev/input/event0"     # Replace this with the actual input device for the remote
+SCANCODE="00070768"                 # Replace this with the scancode for the desired button
+
+# Debounce time in seconds
+DEBOUNCE_TIME=1                     # Prevent double execution within this time frame
+
+# Track the last execution time
+LAST_EXECUTION=0
+
+# Monitor the input device for events
+getevent -ql $INPUT_DEVICE | while read line; do
+    # Check if the scancode matches the desired one
+    echo "$line" | grep "$SCANCODE" > /dev/null
+    if [ $? -eq 0 ]; then
+        # Get the current timestamp
+        CURRENT_TIME=$(date +%s)
+
+        # Check if the last execution was within the debounce period
+        if (( CURRENT_TIME - LAST_EXECUTION >= DEBOUNCE_TIME )); then
+            # Update last execution time
+            LAST_EXECUTION=$CURRENT_TIME
+
+            # Execute your desired action
+            echo "Input detected: Scancode $SCANCODE"
+            echo "Simulating 'input keyevent 96'..."
+            input keyevent 96
+        else
+            echo "Debounced input ignored."
+        fi
+    fi
+done
+```
+
 ## Go home action
 
 `cat /data/local/tmp/`
@@ -153,6 +194,11 @@ service key_listener /system/bin/sh /data/local/tmp/key_listener.sh
     oneshot
 
 service power_listener /system/bin/sh /data/local/tmp/power_listener.sh
+    class main
+    user root
+    oneshot
+
+service ok_listener /system/bin/sh /data/local/tmp/ok_button_listener.sh
     class main
     user root
     oneshot
